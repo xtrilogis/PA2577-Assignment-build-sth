@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>List Grocery Prices</title>
+  <style>
+    body {
+      font-family: 'Roboto', sans-serif;
+      background-color: #f9f9f9;
+      color: #333;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+      margin: 0;
+      padding: 40px 20px;
+    }
+
+    h1 {
+      color: #2c3e50;
+      margin-bottom: 10px;
+    }
+
+    h2 {
+      color: #34495e;
+      margin-bottom: 20px;
+    }
+
+    #singleItemWrapper {
+      width: 60%;
+      max-width: 600px;
+      text-align: left;
+      margin-bottom: 20px;
+    }
+
+    #resultOne {
+      margin: 10px 0;
+      font-size: 1.1em;
+      min-height: 50px;
+    }
+
+    button {
+      background-color: #3498db;
+      color: #fff;
+      border: none;
+      padding: 10px 25px;
+      font-size: 1em;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: background-color 0.2s ease;
+    }
+
+    button:hover {
+      background-color: #2980b9;
+    }
+
+    table {
+      border-collapse: collapse;
+      margin-top: 10px;
+      width: 100%;
+    }
+
+    th, td {
+      border: 1px solid #ddd;
+      padding: 10px 15px;
+      text-align: center;
+    }
+
+    th {
+      background-color: #3498db;
+      color: white;
+    }
+
+    td {
+      background-color: #ecf0f1;
+    }
+  </style>
+</head>
+
+<body>
+  <h1>Grocery Price List</h1>
+
+  <h2>List One Random Item</h2>
+  <p id="resultOne">Click the button to get an item</p>
+  <button id="queryRandomItemBtn">Go</button>
+
+  <script>
+    document.getElementById("queryRandomItemBtn").addEventListener("click", async () => {
+      try {
+        const response = await fetch("/items/random"); // Express will proxy this
+
+        const result = await response.json();
+        console.log(result);
+        if (result.error) {
+          document.getElementById("resultOne").innerText = result["error"];
+          return;
+        }
+
+        const [id, name, unit, price] = result.data;
+
+        document.getElementById("resultOne").innerHTML = `
+          <strong>Item:</strong><br>
+          ID: ${id}<br>
+          Name: ${name}<br>
+          Unit: ${unit}<br>
+          Price: ${Number(price).toFixed(2)} SEK
+        `;
+      } catch (err) {
+        document.getElementById("resultOne").innerText = "Error: " + err;
+      }
+    });
+  </script>
+
+  <h2>List All Items</h2>
+  <p id="resultAll">Click the button to get the item list</p>
+  <button id="queryAllItemsBtn">Query Postgres</button>
+
+  <script>
+    document.getElementById("queryAllItemsBtn").addEventListener("click", async () => {
+      try {
+        const response = await fetch("/items/all"); // Express will proxy this
+        const result = await response.json();
+        console.log(result);
+
+        if (result.error) {
+          document.getElementById("resultAll").innerText = result["error"];
+          return;
+        }
+
+        const rows = result.data;
+        if (!rows || rows.length === 0) {
+          document.getElementById("resultAll").innerText = "No items found.";
+          return;
+        }
+
+        let table = `
+          <table border="1" cellpadding="5" cellspacing="0">
+            <tr>
+              <th>ID</th>
+              <th>Name</th>
+              <th>Unit</th>
+              <th>Price</th>
+            </tr>
+        `;
+
+        rows.forEach(([id, name, unit, price]) => {
+          table += `
+            <tr>
+              <td>${id}</td>
+              <td>${name}</td>
+              <td>${unit}</td>
+              <td>${Number(price).toFixed(2)} SEK</td>
+            </tr>
+          `;
+        });
+
+        table += "</table>";
+
+        document.getElementById("resultAll").innerHTML = table;
+      } catch (err) {
+        document.getElementById("resultAll").innerText = "Error: " + err;
+      }
+    });
+  </script>
+
+</body>
+</html>
