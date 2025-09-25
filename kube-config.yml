@@ -1,7 +1,17 @@
 apiVersion: v1
+kind: Secret
+metadata:
+  name: postgres-secret
+type: Opaque
+stringData:
+  POSTGRES_USER: ps_user
+  POSTGRES_PASSWORD: SecurePassword123
+  POSTGRES_DB: ps_db
+---
+apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: my-postgres-init
+  name: postgres-init
   labels:
     app: postgres
 data:
@@ -21,16 +31,6 @@ data:
     ('Rice', 'kg', 24.97),
     ('Milk', 'liter', 14.70),
     ('Cookies', 'package', 12.95);
----
-apiVersion: v1
-kind: Secret
-metadata:
-  name: postgres-secret
-type: Opaque
-stringData:
-  POSTGRES_USER: ps_user
-  POSTGRES_PASSWORD: SecurePassword123
-  POSTGRES_DB: ps_db
 ---
 apiVersion: apps/v1
 kind: StatefulSet
@@ -76,7 +76,7 @@ spec:
       volumes:
         - name: init-sql
           configMap:
-            name: my-postgres-init
+            name: postgres-init
   volumeClaimTemplates:
     - metadata:
         name: postgresdata
@@ -129,9 +129,8 @@ metadata:
 spec:
   type: LoadBalancer
   ports:
-    - port: 80 # 3000
+    - port: 80
       targetPort: 3000
-      # nodePort: 32000 
   selector:
     app: web-frontend
 ---
@@ -156,12 +155,6 @@ spec:
           ports:
             - containerPort: 8000
           env:
-            # - name: POSTGRES_DB
-            #   value: "ps_db"
-            # - name: POSTGRES_USER
-            #   value: "ps_user"
-            # - name: POSTGRES_PASSWORD
-            #   value: "SecurePassword123"
             - name: POSTGRES_HOST
               value: "postgres-svc"
             - name: POSTGRES_PORT
@@ -193,7 +186,6 @@ spec:
   ports:
     - port: 8000
       targetPort: 8000
-      # nodePort: 8000
   selector:
     app: fast-api
 ---
